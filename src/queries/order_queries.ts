@@ -107,9 +107,12 @@ export async function fetchCustomerOrders(
   return rows;
 }
 
-export async function getPendingOrders(db: Database): Promise<any[]> {
+export async function getPendingOrders(db: Database, thresholdDays?: number): Promise<any[]> {
+  const thresholdClause = thresholdDays !== undefined
+    ? `AND julianday('now') - julianday(o.order_date) > ${thresholdDays}`
+    : "";
   const query = `
-    SELECT 
+    SELECT
         o.order_id,
         o.order_date,
         o.total_amount,
@@ -119,6 +122,7 @@ export async function getPendingOrders(db: Database): Promise<any[]> {
     FROM orders o
     JOIN customers c ON o.customer_id = c.customer_id
     WHERE o.status = 'pending'
+    ${thresholdClause}
     ORDER BY o.order_date
     `;
 
